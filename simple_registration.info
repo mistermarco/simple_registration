@@ -1,0 +1,3 @@
+name = Simple Registration
+description = A simple registration for free events with an automated wait list
+core = 7.x
