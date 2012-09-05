@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * The install file; creates and deletes any needed variables
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function simple_registration_schema() {
+  $schema['simple_registration_states'] = array(
+    'description' => t('Table to store registration states'),
+    'fields' => array(
+      'uid' => array(
+        'description' => t('User ID'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'state' => array(
+        'description' => t('ID of the registration state'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'created' => array(
+        'description' => 'The Unix timestamp when the state was saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0),
+    ),
+    'unique keys' => array(
+      'uid' => array('uid')
+    ),
+    'primary key' => array('uid'),
+  );
+  return $schema;
+}
+
+function simple_registration_install() {
+  variable_set('simple_registration_max_attendees', 250);
+  variable_set('simple_registration_max_waiting_list', 50);
+}
+
+function simple_registration_uninstall() {
+  variable_del('simple_registration_max_attendees');
+  variable_del('simple_registration_max_waiting_list');
+}
