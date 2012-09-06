@@ -41,9 +41,25 @@ function simple_registration_schema() {
 function simple_registration_install() {
   variable_set('simple_registration_max_attendees', 250);
   variable_set('simple_registration_max_waiting_list', 50);
+
+  // Add Registered Role
+  $registered_role = new stdClass();
+  $registered_role->name = 'Registered';
+  user_role_save($registered_role);
+
+  // Add Waitlisted Role
+  $waitlisted_role = new stdClass();
+  $waitlisted_role->name = 'Waitlisted';
+  user_role_save($waitlisted_role);
 }
 
 function simple_registration_uninstall() {
   variable_del('simple_registration_max_attendees');
   variable_del('simple_registration_max_waiting_list');
+
+  // Remove Registered Role
+  user_role_delete('Registered');
+
+  // Remove Waitlisted Role
+  user_role_delete('Waitlisted');
 }
