@@ -115,13 +115,13 @@ function simple_registration_block_view($delta = '') {
 
   switch ($delta) {
     case 'simple_registration':
+      $block_content = '';
       global $user;
       if ($user->uid > 0) {
         $state = simple_registration_user_status($user->uid);
         $block['subject'] = t('Registration');
         $block['content'] = t('No content available.');
 
-        $block_content = '';
         if ($state == REGISTERED) {
           $block_content .= "You are currently <strong>registered</strong>.";
           $block_content .= "<br />If you can no longer attend, please cancel your registration so others have a chance to attend.";
@@ -176,8 +176,8 @@ function simple_registration_block_view($delta = '') {
 function simple_registration_menu() {
   $items = array();
 
-  $items['admin/settings/simple_registration'] = array(
-    'title' => t('Simple Registration Settings'),
+  $items['admin/config/simple_registration'] = array(
+    'title' => t('Simple Registration'),
     'description' => t('Adjust Simple Registration Settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('simple_registration_admin'),
@@ -188,7 +188,7 @@ function simple_registration_menu() {
   return $items;
 }
 
-function simple_registration_admin() {
+function simple_registration_admin($form, &$form_state) {
   $form = array();
 
   $form['simple_registration_max_attendees'] = array(
