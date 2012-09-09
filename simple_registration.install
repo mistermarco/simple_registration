@@ -41,6 +41,8 @@ function simple_registration_schema() {
 function simple_registration_install() {
   variable_set('simple_registration_max_attendees', 250);
   variable_set('simple_registration_max_waiting_list', 50);
+  variable_set('simple_registration_login_url', 'user/login');
+  variable_set('simple_registration_bcc_email', '');
 
   // Add Registered Role
   $registered_role = new stdClass();
@@ -56,6 +58,8 @@ function simple_registration_install() {
 function simple_registration_uninstall() {
   variable_del('simple_registration_max_attendees');
   variable_del('simple_registration_max_waiting_list');
+  variable_del('simple_registration_login_url');
+  variable_del('simple_registration_bcc_email');
 
   // Remove Registered Role
   user_role_delete('Registered');

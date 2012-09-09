@@ -3,7 +3,12 @@
 define("REGISTERED", 1);
 define("WAITLISTED", 2);
 
-// Registration Form
+
+/**
+ * Registration Form
+ * This form appears in a block if the user is logged in, but is
+ * not registered or wait listed.
+ */
 
 function simple_registration_register_form($form, $form_state) {
   $form['submit'] = array(
@@ -19,7 +24,11 @@ function simple_registration_register_form_submit($form, &$form_state) {
   simple_registration_register_user($user->uid);
 }
 
-// Wait List Form
+/**
+ * Wait List Form
+ * This form appears in a block if the user is logged in, but is
+ * not registered or wait listed, and the even is full.
+ */
 
 function simple_registration_waitlist_form($form, &$form_state) {
   $form['submit'] = array(
@@ -34,7 +43,12 @@ function simple_registration_waitlist_form_submit($form, &$form_state) {
   simple_registration_waitlist_user($user->uid);
 }
 
-// Cancellation Form
+/**
+ * Cancellation Form for Registered User
+ * This form appears in a block if the user is logged in and is
+ * registered. The form asks for confirmation before cancelling registration.
+ */
+
 
 function simple_registration_cancel_form($form, &$form_state) {
   $form = array();
@@ -47,21 +61,36 @@ function simple_registration_cancel_form($form, &$form_state) {
     return $form;
   }
   else  {
-    return confirm_form($form, drupal_get_title(), drupal_get_path_alias(), '<h4>Are you sure?</h4>', 'Yes, cancel my registration', 'No, never mind');
+    return confirm_form(
+      $form,
+      drupal_get_title(),
+      drupal_get_path_alias(),
+      '<h4>Are you sure?</h4>',
+      'Yes, cancel my registration',
+      'No, never mind'
+    );
   }
 }
 
 function simple_registration_cancel_form_submit($form, &$form_state) {
-    if(!isset($form_state['storage']['confirm'])) {
-      $form_state['storage']['confirm'] = TRUE; // this will cause the form to be rebuilt, entering the confirm part of the form
-      $form_state['rebuild'] = TRUE;
-    }
-    else {
-      global $user;
-      simple_registration_cancel_user($user->uid);
-      drupal_goto(drupal_get_path_alias());
-    }
+  // if the form has not been confirmed yet, set the state and rebuild the form
+  if(!isset($form_state['storage']['confirm'])) {
+    $form_state['storage']['confirm'] = TRUE;
+    $form_state['rebuild'] = TRUE;
+  }
+  else {
+    global $user;
+    simple_registration_cancel_user($user->uid);
+    drupal_goto(drupal_get_path_alias());
+  }
 }
+
+/**
+ * Cancellation Form for Waitlisted User
+ * This form appears in a block if the user is logged in and is
+ * waitlisted. The form asks for confirmation before removing the user
+ * from the waitlist.
+ */
 
 function simple_registration_cancel_waitlist_form($form, &$form_state) {
   if(!isset($form_state['storage']['confirm'])) {
@@ -88,8 +117,12 @@ function simple_registration_cancel_waitlist_form_submit($form, &$form_state) {
       drupal_goto(drupal_get_path_alias());
     }
 }
+
 /**
  * Implementation of hook_block_info()
+ * This module creates one block to display registration, waitlist or
+ * cancellation forms to a logged in user. If the user is not logged in,
+ * this form displays a login link.
  */
 
 function simple_registration_block_info() {
@@ -98,18 +131,22 @@ function simple_registration_block_info() {
     'cache' => DRUPAL_NO_CACHE, 
   );
 
+  $blocks['simple_registration_profile'] = array(
+    'info' => t('Simple Registration: Profile'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+
   return $blocks;
 }
 
 
 /**
- * Implementation of hook_block().
- * @param string $op one of "list", "view", "save" and "configure"
- * @param integer $delta code to identify the block
- * @param array $edit only for "save" operation
+ * Implementation of hook_block_view().
+ * @param string $delta code to identify the block
 */
 
 function simple_registration_block_view($delta = '') {
+
   // set up an empty array which will contain the block contents
   $block = array();
 
@@ -117,10 +154,11 @@ function simple_registration_block_view($delta = '') {
     case 'simple_registration':
       $block_content = '';
       global $user;
+      $block['subject'] = t('Registration');
+
+      // if the user is logged in, we check their registration status
       if ($user->uid > 0) {
         $state = simple_registration_user_status($user->uid);
-        $block['subject'] = t('Registration');
-        $block['content'] = t('No content available.');
 
         if ($state == REGISTERED) {
           $block_content .= "You are currently <strong>registered</strong>.";
@@ -142,35 +180,45 @@ function simple_registration_block_view($delta = '') {
             $block_content .= drupal_render(drupal_get_form('simple_registration_waitlist_form'));
           }
           else {
-            $block_content .= "<br />We are at maximum capacity and the waitlist is full.";
+            $block_content .= "<br />Unfortunately, we are at maximum capacity and the waitlist is full.";
           }
         }
-
-        $block_content .= "<h3>Your Profile</h3><p>";
-        $block_content .= "Logged in as $user->name (" . l('logout', 'logout') . ')';
-        $block_content .= "<br />Fill out your profile to connect with others with similar interests.";
-        $block_content .= '<br />' . l('Edit Profile', 'user/' . $user->uid . '/edit/profile',
-          array(
-            'attributes' => array('class' => array('btn', 'success'), 'id' => 'edit-profile-button'),
-            'query' => array('destination' => drupal_get_path_alias()),
-          ));
       }
+      // if the user is anonymous, we'll ask them to log in before they can register.
       else {
-        $block_content .= "<h3>Log In To Register</h3>";
-        $block_content .= '<p>You are currently not logged in.';
-        $block_content .= '<br /><a href="' . 'https://itunconference.stanford.edu/webauth/wa_login.php?destination=' . drupal_get_path_alias() . '" class="btn success">Log in using your SUNetID</a>';
+        $block_content .= l(
+          'Log in to register.',
+          variable_get('simple_registration_login_url', 'user/login'),
+          array(
+            'attributes' => array('class' => array('btn success')),
+            'query'      => array(drupal_get_destination())
+          )
+        );
       }
-
-      $block_content .= '</p>';
       $block['content'] = $block_content;
-
+      break; 
+    case 'simple_registration_profile':
+      $block_content = '';
+      global $user;
+      $block['subject'] = t('Profile');
+      $block_content .= "Logged in as $user->name (" . l('logout', 'logout') . ')<br />';
+      $block_content .= "Fill out your profile to connect with others with similar interests.<br />";
+      $block_content .= l(
+        'Edit Profile',
+        'user/' . $user->uid . '/edit',
+        array(
+          'attributes' => array('class' => array('btn', 'success'), 'id' => 'edit-profile-button'),
+          'query' => array(drupal_get_destination())
+        ));
+      $block['content'] = $block_content;
       break; 
   }
   return $block;
 }
 
 /**
- *  Implementation of hook_menu().
+ * Implementation of hook_menu().
+ * Set up the module's settings form 
  */
 
 function simple_registration_menu() {
@@ -211,11 +259,132 @@ function simple_registration_admin($form, &$form_state) {
     '#required' => TRUE,
   );
 
+  $form['simple_registration_login_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Login URL to use on the registration block'),
+    '#default_value' => variable_get('simple_registration_login_url', 'user/login'),
+    '#size' => 80,
+    '#maxlength' => 120,
+    '#description' => t("The login URL to use on the registration block."),
+    '#required' => TRUE,
+  );
+
+  $form['simple_registration_bcc_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Notification Emails BCC Address'),
+    '#default_value' => variable_get('simple_registration_bcc_email', ''),
+    '#size' => 80,
+    '#maxlength' => 120,
+    '#description' => t('Email address to blind copy when users are emailed about changes to their registration status.'),
+    '#required' => FALSE,
+  );
+
+  $form['email_title'] = array(
+    '#type' => 'item',
+    '#title' => t('E-mails'),
+  );
+
+  $form['simple_registration_email'] = array(
+    '#type' => 'vertical_tabs',
+  );
+
+  $form['simple_registration_email_registration'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Registration'),
+    '#collapsible' => TRUE,
+    '#description' => t('Edit the e-mail message sent to users who have registered themselves.'),
+    '#group' => 'simple_registration_email',
+  );
+
+  $form['simple_registration_email_registration']['simple_registration_email_registration_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => _simple_registration_mail_text('registration_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+    '#required' => TRUE,
+  );
+
+  $form['simple_registration_email_registration']['simple_registration_email_registration_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => _simple_registration_mail_text('registration_body', NULL, array(), FALSE),
+    '#rows' => 15,
+  );
+
+  $form['simple_registration_email_registration_from_waitlist'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Registration (automatic - from waitlist)'),
+    '#collapsible' => TRUE,
+    '#description' => t('Edit the e-mail message sent to users who have been registered from the wait list.'),
+    '#group' => 'simple_registration_email',
+  );
+
+  $form['simple_registration_email_registration_from_waitlist']['simple_registration_email_registration_from_waitlist_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => _simple_registration_mail_text('registration_from_waitlist_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+    '#required' => TRUE,
+  );
+
+  $form['simple_registration_email_registration_from_waitlist']['simple_registration_email_registration_from_waitlistbody'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => _simple_registration_mail_text('registration_from_waitlist_body', NULL, array(), FALSE),
+    '#rows' => 15,
+  );
+
+  $form['simple_registration_email_cancellation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cancellation'),
+    '#collapsible' => TRUE,
+    '#description' => t('Edit the e-mail message sent to users who have canceled their registration.'),
+    '#group' => 'simple_registration_email',
+  );
+
+  $form['simple_registration_email_cancellation']['simple_registration_email_cancellation_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => _simple_registration_mail_text('cancellation_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+    '#required' => TRUE,
+  );
+
+  $form['simple_registration_email_cancellation']['simple_registration_email_cancellationbody'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => _simple_registration_mail_text('cancellation_body', NULL, array(), FALSE),
+    '#rows' => 15,
+  );
+
+  $form['simple_registration_email_waitlist'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Waitlist'),
+    '#collapsible' => TRUE,
+    '#description' => t('Edit the e-mail message sent to users who have been waitlisted.'),
+    '#group' => 'simple_registration_email',
+  );
+
+  $form['simple_registration_email_waitlist']['simple_registration_email_waitlist_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => _simple_registration_mail_text('waitlist_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+    '#required' => TRUE,
+  );
+
+  $form['simple_registration_email_waitlist']['simple_registration_email_waitlistbody'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => _simple_registration_mail_text('waitlist_body', NULL, array(), FALSE),
+    '#rows' => 15,
+  );
+
   return system_settings_form($form);
 }
 
 /**
- *  Find the user's current status
+ * Find the user's current registration status
  */
 
 function simple_registration_user_status($uid) {
@@ -227,29 +396,31 @@ function simple_registration_user_status($uid) {
  *  Register the user
  */
 
-function simple_registration_register_user($uid) {
+function simple_registration_register_user($uid, $from_waitlist = FALSE) {
   $user = user_load($uid);
-  simple_registration_notify($user, 'registration');
-  simple_registration_grant_role($user, REGISTERED);
-  $state = simple_registration_user_status($uid);
-  if ($state) {
-    db_update('simple_registration_states')
-      ->fields(array(
-        'state' => REGISTERED,
-        'created' => REQUEST_TIME,
-      ))
-      ->condition('uid', $uid, '=')
-      ->execute();
+
+  // Log the registration
+  watchdog('simple_registration','Registered: %user', array('%user' => $user->name));
+  
+  // Notify the user
+  if ($from_waitlist) {
+    simple_registration_notify($user, 'registration_from_waitlist');
   }
   else {
-    db_insert('simple_registration_states')
-      ->fields(array(
-        'uid' => $uid,
-        'state' => REGISTERED,
-        'created' => REQUEST_TIME,
-      ))
-      ->execute();
+    simple_registration_notify($user, 'registration');
   }
+  
+  // Grant the user the Registered role
+  simple_registration_grant_role($user, REGISTERED);
+
+  // Create or update the user's status
+  db_merge('simple_registration_states')
+    ->key(array('uid' => $uid))
+    ->fields(array(
+      'state' => REGISTERED,
+      'created' => REQUEST_TIME,
+    ))
+    ->execute();
 }
 
 /**
@@ -258,27 +429,24 @@ function simple_registration_register_user($uid) {
 
 function simple_registration_waitlist_user($uid) {
   $user = user_load($uid);
+
+  // Log the wait list status
+  watchdog('simple_registration','Waitlisted: %user', array('%user' => $user->name));
+
+  // Notify the user
   simple_registration_notify($user, 'waitlist');
+
+  // Grant the user the Waitlisted role
   simple_registration_grant_role($user, WAITLISTED);
-  $state = simple_registration_user_status($uid);
-  if ($state) {
-    db_update('simple_registration_states')
-      ->fields(array(
-        'state' => WAITLISTED,
-        'created' => REQUEST_TIME,
-      ))
-      ->condition('uid', $uid, '=')
-      ->execute();
-  }
-  else {
-    db_insert('simple_registration_states')
-      ->fields(array(
-        'uid' => $uid,
-        'state' => WAITLISTED,
-        'created' => REQUEST_TIME,
-      ))
-      ->execute();
-  }
+
+  // Create or update the user's status
+  db_merge('simple_registration_states')
+    ->key(array('uid' => $uid))
+    ->fields(array(
+      'state' => WAITLISTED,
+      'created' => REQUEST_TIME,
+    ))
+    ->execute();
 }
 
 /**
@@ -287,22 +455,42 @@ function simple_registration_waitlist_user($uid) {
 
 function simple_registration_cancel_user($uid) {
   $user = user_load($uid);
+
+  // Log the event
+  watchdog('simple_registration','Cancelled: %user', array('%user' => $user->name));
+
+  // Grab the ID of the first waitlisted person
+  // Note: in some cases, this user could be that waitlisted person
   $waitlisted_uid = simple_registration_waitlist_first_user();
+
+  // Notify the user
   simple_registration_notify($user, 'cancellation');
+
+  // Remove the role from the user
   simple_registration_grant_role($user, 0);
+
+  // Find the state of the user (registered or waitlisted)
   $state = simple_registration_user_status($uid);
+
+  // Delete their status
   db_delete('simple_registration_states')
     ->condition('uid', $uid)
     ->execute();
+
+  // If there is a waitlisted user and this user was registered
+  // cancelling this user's registration would have opened up a spot
+  // therefore, register the first person on the wait list  
+
   if ($waitlisted_uid && ($state == REGISTERED)) {
-    simple_registration_register_user($waitlisted_uid);
-    $waitlisted_user = user_load($waitlisted_uid);
-    simple_registration_notify($waitlisted_user, 'registration_from_waitlist');
+    // register the user that was first on the waitlist
+    $from_waitlist = TRUE;
+    simple_registration_register_user($waitlisted_uid, $from_waitlist);
   }
 }
 
 /**
  *  Calculate how many seats are left
+ *  This is the maximum number of attendees allowed, minus registered users
  */
 
 function simple_registration_spaces_available() {
@@ -314,6 +502,7 @@ function simple_registration_spaces_available() {
 
 /**
  *  Calculate how many seats are left on the waitlist
+ *  This is the maximum number of waitlisted attendees allowed, minus waitlisted users
  */
 
 function simple_registration_waitlist_spaces_available() {
@@ -324,61 +513,113 @@ function simple_registration_waitlist_spaces_available() {
 
 /**
  *  Find who's next on the waitlist
+ *  Note: there is a chance two people were waitlisted at the same time. In that case, the DB decides which to return
  */
 
 function simple_registration_waitlist_first_user() {
    return db_query('SELECT uid FROM {simple_registration_states} WHERE state = :state order by created limit 1', array(':state' => WAITLISTED))->fetchField();
 }
 
+/**
+ *  Find a user's location on the waitlist
+ */
+
+function simple_registration_waitlist_position($uid) {
+  // TODO: we assume the user is waitlisted?
+  // find the date the user was waitlisted
+  // count the number of uid's of people that are waitlisted before or at the same time as this person but are not this person
+  // add 1 (3 people waitlisted before, so this person is fourth, if there 0, this person is first
+}
+
+/**
+ *  Send out an email to notify the user of a change in registration status
+ */
+
 function simple_registration_notify($account, $key) {
   $params['account'] = $account;
   drupal_mail('simple_registration', $key, $account->mail, user_preferred_language($account), $params);
 }
 
-function simple_registration_mail($key, &$message, $params) {
-  return;
-  $language = $message['language'];
-  $variables = user_mail_tokens($params['account'], $language);
-  $message['headers']['Bcc'] = 'it-unconference-registration@lists.stanford.edu';
-  switch($key) {
-    case 'waitlist':
-      $message['subject'] = t('Waitlist Receipt from !site', $variables, $language->language);
-      $message['body'][]  = t("Dear !username,\n\nYou have been wait listed for the !site.
-                              \nAs people cancel, the first person on the wait list will be automatically registered.
-                              \nIf that's you, you will receive an email to confirm your registration.
-                              \nhttp://itunconference.stanford.edu
-                              ", $variables, $language->language);
-      break;
-    case 'cancellation':
-      $message['subject'] = t('Cancellation Receipt from !site', $variables, $language->language);
-      $message['body'][]  = t("Dear !username,
-                               \n\nAs requested, we've cancelled your registration. We are sorry we won't get to see you at the event.
-                               \nhttp://itunconference.stanford.edu
-                               ", $variables, $language->language);
-      break;
-    case 'registration':
-      $message['subject'] = t('Registration Receipt from !site', $variables, $language->language);
-      $message['body'][]  = t("Dear !username,
-                               \n\nCongratulations! You have been registered for the !site.
-                               \nThe event will take place on November 16th, 2011 from 8:30 to 6:00.
-                               \nThe location is Paul Brest Hall in the Munger Graduate Residences at the Law School.
-                               \nIf for some reason you are unable to attend, we would ask that you kindly cancel your registration so that waitlisted registrants can be accommodated. To cancel your registration,  please go to the following link: 
-                               \nhttp://itunconference.stanford.edu"
-                               , $variables, $language->language);
-      break;
-    case 'registration_from_waitlist':
-      $message['subject'] = t('Registration Receipt from !site', $variables, $language->language);
-      $message['body'][]  = t("Dear !username,
-                               \n\nCongratulations! A spot opened up and you have been registered for the !site.
-                               \nThe event will take place on November 16th, 2011 from 8:30 to 6:00.
-                               \nThe location is Paul Brest Hall in the Munger Graduate Residences at the Law School.
-                               \nIf for some reason you are unable to attend, we would ask that you kindly cancel your registration so that waitlisted registrants can be accommodated. To cancel your registration,  please go to the following link: 
-                               \nhttp://itunconference.stanford.edu
-                               ", $variables, $language->language);
-      break;
+/**
+ *  Decide which email to send out and send it
+ */
 
+function simple_registration_mail($key, &$message, $params) {
+  $language = $message['language'];
+  $variables = array('user' => $params['account']);
+  $message['subject'] = _simple_registration_mail_text($key . '_subject', $language, $variables);
+  $message['body'][]  = _simple_registration_mail_text($key . '_body',    $language, $variables);
+
+  // Find out if the admin wants emails to bcc'ed to an email address 
+  $bcc_email = trim(variable_get('simple_registration_bcc_email', ''));
+  if (!empty($bcc_email)) {
+    $message['headers']['Bcc'] = $bcc_email;
   }
 }
+
+function _simple_registration_mail_text($key, $language = NULL, $variables = array(), $replace = TRUE) {
+  $langcode = isset($language) ? $language->language : NULL;
+
+  if ($admin_setting = variable_get('simple_registration_mail_' . $key, FALSE)) {
+    // An admin setting overrides the default string.
+    $text = $admin_setting;
+  }
+  else {
+    // No override, return default string.
+    switch($key) {
+      case 'waitlist_subject':
+        $text = t('Waitlist Receipt from [site:name]', array(), array('langcode' => $langcode));
+        break;
+      case 'waitlist_body':
+        $text = t("Dear [user:name],\n\nYou have been wait listed for the [site:name].
+                   \nAs people cancel, the first person on the wait list will be automatically registered.
+                   \nIf that's you, you will receive an email to confirm your registration.
+                  ", array(), array('langcode' => $langcode));
+        break;
+      case 'cancellation_subject':
+        $text = t('Cancellation Receipt from [site:name]', array(), array('langcode' => $langcode));
+        break;
+      case 'cancellation_body':
+        $text = t("Dear [user:name],
+                  \nAs requested, we've cancelled your registration. We are sorry we won't get to see you at the event.
+                  ", array(), array('langcode' => $langcode));
+        break;
+      case 'registration_subject':
+        $text = t('Registration Receipt from [site:name]', array(), array('langcode' => $langcode));
+        break;
+      case 'registration_body':
+        $text = t("Dear [user:name],
+                  \nCongratulations! You have been registered for the [site:name].
+                  \nIf for some reason you are unable to attend, we would ask that you kindly cancel your registration so that waitlisted registrants can be accommodated. To cancel your registration, please go to the following link:
+                  \n[site:url]
+                  ", array(), array('langcode' => $langcode));
+        break;
+      case 'registration_from_waitlist_subject':
+        $text = t('Registration Receipt from [site:name]', array(), array('langcode' => $langcode));
+        break;
+      case 'registration_from_waitlist_body':
+        $text = t("Dear [user:name],
+                  \nCongratulations! A spot opened up and you have been registered for the [site:name].
+                  \nIf for some reason you are unable to attend, we would ask that you kindly cancel your registration so that waitlisted registrants can be accommodated. To cancel your registration, please go to the following link:
+                  \n[site:url]
+                  ", array(), array('langcode' => $langcode));
+        break;
+      }
+  }
+
+  if ($replace) {
+    // We do not sanitize the token replacement, since the output of this
+    // replacement is intended for an e-mail message, not a web browser.
+    return token_replace($text, $variables, array('language' => $language, 'callback' => 'user_mail_tokens', 'sanitize' => FALSE, 'clear' => TRUE));
+  }
+
+  return $text;
+}
+
+/**
+ * Grant the role to the user. In some cases, the role is 0
+ * which removes both roles.
+ */
 
 function simple_registration_grant_role($account, $state) {
 
