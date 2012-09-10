@@ -200,16 +200,18 @@ function simple_registration_block_view($delta = '') {
     case 'simple_registration_profile':
       $block_content = '';
       global $user;
-      $block['subject'] = t('Profile');
-      $block_content .= "Logged in as $user->name (" . l('logout', 'logout') . ')<br />';
-      $block_content .= "Fill out your profile to connect with others with similar interests.<br />";
-      $block_content .= l(
-        'Edit Profile',
-        'user/' . $user->uid . '/edit',
-        array(
-          'attributes' => array('class' => array('btn', 'success'), 'id' => 'edit-profile-button'),
-          'query' => array(drupal_get_destination())
-        ));
+	  if ($user->uid > 0) {
+        $block['subject'] = t('Profile');
+        $block_content .= "Logged in as $user->name (" . l('logout', 'logout') . ')<br />';
+        $block_content .= "Fill out your profile to connect with others with similar interests.<br />";
+        $block_content .= l(
+          'Edit Profile',
+          'user/' . $user->uid . '/edit',
+          array(
+            'attributes' => array('class' => array('btn', 'success'), 'id' => 'edit-profile-button'),
+            'query' => array(drupal_get_destination())
+          ));
+      }
       $block['content'] = $block_content;
       break; 
   }
