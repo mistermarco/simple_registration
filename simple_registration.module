@@ -187,7 +187,7 @@ function simple_registration_block_view($delta = '') {
       // if the user is anonymous, we'll ask them to log in before they can register.
       else {
         $block_content .= l(
-          'Log in to register.',
+          'Log in to register',
           variable_get('simple_registration_login_url', 'user/login'),
           array(
             'attributes' => array('class' => array('btn success')),
