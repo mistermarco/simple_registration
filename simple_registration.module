@@ -12,7 +12,7 @@ define("WAITLISTED", 2);
 
 function simple_registration_register_form($form, $form_state) {
   $form['submit'] = array(
-    '#attributes' => array('class' => array('waitlist', 'btn', 'success')),
+    '#attributes' => array('class' => array('btn')),
     '#type' => 'submit',
     '#value' => t('Register')
   );
@@ -54,7 +54,7 @@ function simple_registration_cancel_form($form, &$form_state) {
   $form = array();
   if(!isset($form_state['storage']['confirm'])) {
     $form['submit'] = array(
-      '#attributes' => array('class' => array('waitlist','btn', 'danger')),
+      '#attributes' => array('class' => array('btn')),
       '#type' => 'submit',
       '#value' => t('Cancel Registration')
     );
@@ -161,26 +161,25 @@ function simple_registration_block_view($delta = '') {
         $state = simple_registration_user_status($user->uid);
 
         if ($state == REGISTERED) {
-          $block_content .= "You are currently <strong>registered</strong>.";
-          $block_content .= "<br />If you can no longer attend, please cancel your registration so others have a chance to attend.";
+          $block_content .= "<p>You are currently <strong>registered</strong>. If you can no longer attend, please cancel your registration so others have a chance to attend.</p>";
           $block_content .= drupal_render(drupal_get_form('simple_registration_cancel_form'));
         }
         else if ($state == WAITLISTED) {
-          $block_content .= "You are now on the <strong>wait list</strong>. If a space opens up, we'll contact you.";
+          $block_content .= "<p>You are now on the <strong>wait list</strong>. If a space opens up, we'll contact you.</p>";
           $block_content .= drupal_render(drupal_get_form('simple_registration_cancel_waitlist_form'));
         }
         else {
-          $block_content .= "You are currently <strong>not registered</strong>.";
+          $block_content .= "<p>You are currently <strong>not registered</strong>. ";
           if (simple_registration_spaces_available() > 0) {
-            $block_content .= "<br />There are still spaces left, join us!";
+            $block_content .= "There are still spaces left, join us!</p>";
             $block_content .= drupal_render(drupal_get_form('simple_registration_register_form'));
           }
           else if (simple_registration_waitlist_spaces_available() > 0) {
-            $block_content .= "<br />The event is full, but you can join the wait list. As spaces open up, we'll automatically register people from the waiting list.";
+            $block_content .= "<p>The event is full, but you can join the wait list. As spaces open up, we'll automatically register people from the waiting list.</p>";
             $block_content .= drupal_render(drupal_get_form('simple_registration_waitlist_form'));
           }
           else {
-            $block_content .= "<br />Unfortunately, we are at maximum capacity and the waitlist is full.";
+            $block_content .= "<p>Unfortunately, we are at maximum capacity and the waitlist is full.</p>";
           }
         }
       }
@@ -202,13 +201,13 @@ function simple_registration_block_view($delta = '') {
       global $user;
 	  if ($user->uid > 0) {
         $block['subject'] = t('Profile');
-        $block_content .= "Logged in as $user->name (" . l('logout', 'user/logout') . ')<br />';
-        $block_content .= "Fill out your profile to connect with others with similar interests.<br />";
+        $block_content .= "<p>Logged in as $user->name (" . l('logout', 'user/logout') . ')<br />';
+        $block_content .= "Fill out your profile to connect with others with similar interests.</p>";
         $block_content .= l(
           'Edit Profile',
           'user/' . $user->uid . '/edit',
           array(
-            'attributes' => array('class' => array('btn', 'success'), 'id' => 'edit-profile-button'),
+            'attributes' => array('class' => array('btn'), 'id' => 'edit-profile-button'),
             'query' => array(drupal_get_destination())
           ));
       }
