@@ -202,7 +202,7 @@ function simple_registration_block_view($delta = '') {
       global $user;
 	  if ($user->uid > 0) {
         $block['subject'] = t('Profile');
-        $block_content .= "Logged in as $user->name (" . l('logout', 'logout') . ')<br />';
+        $block_content .= "Logged in as $user->name (" . l('logout', 'user/logout') . ')<br />';
         $block_content .= "Fill out your profile to connect with others with similar interests.<br />";
         $block_content .= l(
           'Edit Profile',
