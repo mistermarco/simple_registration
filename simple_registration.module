@@ -159,6 +159,7 @@ function simple_registration_block_view($delta = '') {
       // if the user is logged in, we check their registration status
       if ($user->uid > 0) {
         $state = simple_registration_user_status($user->uid);
+		$block_content .= "<p>Hello " . $user->name . "!</p>";
 
         if ($state == REGISTERED) {
           $block_content .= "<p>You are currently <strong>registered</strong>. If you can no longer attend, please cancel your registration so others have a chance to attend.</p>";
@@ -328,7 +329,7 @@ function simple_registration_admin($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  $form['simple_registration_email_registration_from_waitlist']['simple_registration_email_registration_from_waitlistbody'] = array(
+  $form['simple_registration_email_registration_from_waitlist']['simple_registration_email_registration_from_waitlist_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Body'),
     '#default_value' => _simple_registration_mail_text('registration_from_waitlist_body', NULL, array(), FALSE),
@@ -351,7 +352,7 @@ function simple_registration_admin($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  $form['simple_registration_email_cancellation']['simple_registration_email_cancellationbody'] = array(
+  $form['simple_registration_email_cancellation']['simple_registration_email_cancellation_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Body'),
     '#default_value' => _simple_registration_mail_text('cancellation_body', NULL, array(), FALSE),
@@ -374,7 +375,7 @@ function simple_registration_admin($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  $form['simple_registration_email_waitlist']['simple_registration_email_waitlistbody'] = array(
+  $form['simple_registration_email_waitlist']['simple_registration_email_waitlist_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Body'),
     '#default_value' => _simple_registration_mail_text('waitlist_body', NULL, array(), FALSE),
@@ -561,7 +562,7 @@ function simple_registration_mail($key, &$message, $params) {
 function _simple_registration_mail_text($key, $language = NULL, $variables = array(), $replace = TRUE) {
   $langcode = isset($language) ? $language->language : NULL;
 
-  if ($admin_setting = variable_get('simple_registration_mail_' . $key, FALSE)) {
+  if ($admin_setting = variable_get('simple_registration_email_' . $key, FALSE)) {
     // An admin setting overrides the default string.
     $text = $admin_setting;
   }
