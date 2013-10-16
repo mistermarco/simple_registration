@@ -1,1 +1,1 @@
-A simple registration for free events with an automated wait list
+A simple registration module for Drupal handling free events. It uses an automated wait list.
