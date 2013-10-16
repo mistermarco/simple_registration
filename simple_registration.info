@@ -2,6 +2,7 @@ name = Simple Registration
 description = A simple registration for free events with an automated wait list
 core = 7.x
 version = "7.x-1.x-dev"
+configure = admin/config/simple_registration
 
 files[] = simple_registration.module
 files[] = simple_registration.install
