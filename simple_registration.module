@@ -399,18 +399,20 @@ function simple_registration_user_status($uid) {
  *  Register the user
  */
 
-function simple_registration_register_user($uid, $from_waitlist = FALSE) {
+function simple_registration_register_user($uid, $from_waitlist = FALSE, $notify_user = TRUE) {
   $user = user_load($uid);
 
   // Log the registration
   watchdog('simple_registration','Registered: %user', array('%user' => $user->name));
   
   // Notify the user
-  if ($from_waitlist) {
-    simple_registration_notify($user, 'registration_from_waitlist');
-  }
-  else {
-    simple_registration_notify($user, 'registration');
+  if ($notify_user) {
+    if ($from_waitlist) {
+      simple_registration_notify($user, 'registration_from_waitlist');
+    }
+    else {
+      simple_registration_notify($user, 'registration');
+    }
   }
   
   // Grant the user the Registered role
