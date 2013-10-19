@@ -6,3 +6,4 @@ configure = admin/config/simple_registration
 
 files[] = simple_registration.module
 files[] = simple_registration.install
+files[] = simple_registration.drush.inc
