@@ -48,8 +48,6 @@ function drush_simple_registration_register_user_validate($name = '') {
     $notify_user = FALSE;
   }
 
-  var_dump($notify_user);
-
   $state = simple_registration_user_status($user->uid);
   if ($state == REGISTERED) {
     drush_log($name . ' is already registered.', 'ok');
