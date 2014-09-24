@@ -1,3 +1,7 @@
 #content-body #edit-cancel {
   margin-left: 15px;
 }
+
+#user-profile-form input[type="text"] {
+    width: 80%;
+}
