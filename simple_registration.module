@@ -240,6 +240,35 @@ function simple_registration_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  $items['admin/config/simple_registration/events'] = array(
+    'title' => t('Events'),
+    'description' => t('View Events'),
+    'page callback' => 'simple_registration_events_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'simple_registration.admin.inc',
+  );
+
+  $items['admin/config/simple_registration/events/add'] = array(
+    'title' => t('Add event'),
+    'description' => t('Add a new event'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('simple_registration_events_add'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'simple_registration.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 1,
+  );
+
+  $items['admin/config/simple_registration/events/edit/%'] = array(
+    'title' => 'Edit Event',
+    'description' => 'Edit an event.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('simple_registration_events_edit', 5),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'simple_registration.admin.inc',
+    'weight' => 1,
+  );
+
   return $items;
 }
 

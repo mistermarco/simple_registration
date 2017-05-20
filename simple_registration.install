@@ -18,6 +18,12 @@ function simple_registration_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0),
+      'eid' => array(
+        'description' => t('Event ID'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
       'state' => array(
         'description' => t('ID of the registration state'),
         'type' => 'int',
@@ -31,9 +37,49 @@ function simple_registration_schema() {
         'default' => 0),
     ),
     'unique keys' => array(
-      'uid' => array('uid')
+      'uid' => array('uid', 'eid')
     ),
-    'primary key' => array('uid'),
+    'primary key' => array('uid', 'eid'),
+  );
+  $schema['simple_registration_events'] = array(
+    'description' => t('Table to store events'),
+    'fields' => array(
+      'eid' => array(
+        'description' => t('Event ID'),
+        'type' => 'serial',
+        'not null' => TRUE),
+      'name' => array(
+        'description' => 'The name of the event.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'max_attendees' => array(
+        'description' => t('Maximum number of attendees'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'max_waiting_list' => array(
+        'description' => t('Maximum number of people on waitlist'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'login_url' => array(
+        'description' => 'The login URL to use.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'bcc_email' => array(
+        'description' => 'The email to be used for BCC notifications.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+    ),
+    'unique keys' => array(
+      'uid' => array('eid')
+    ),
+    'primary key' => array('eid'),
   );
   return $schema;
 }
